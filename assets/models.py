@@ -1,5 +1,6 @@
 from django.db import models
-from exam.models import *
+from rest_framework.exceptions import ValidationError
+
 
 class Region(models.Model):
     name = models.CharField(max_length=50)
@@ -42,12 +43,53 @@ class University(models.Model):
         verbose_name_plural = 'Universitetlar'
         verbose_name = 'Universitet'
 
+class Science(models.Model):
+    def scienceImage(self, filename):
+        return '/'.join(['ScienceImages', filename])
+
+    name = models.CharField(max_length=55)
+    image = models.ImageField(upload_to=scienceImage, null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Fan'
+        verbose_name_plural = 'Fanlar'
+
+class SciencePairs(models.Model):
+    science_1 = models.ForeignKey(Science, on_delete=models.SET_NULL, null=True, blank=True, related_name='science_1')
+    science_2 = models.ForeignKey(Science, on_delete=models.SET_NULL, null=True, blank=True, related_name='science_2')
+
+    def __str__(self):
+        return f'{self.science_1} | {self.science_2}'
+
+    class Meta:
+        verbose_name = 'Fanlar blogi'
+        verbose_name_plural = 'Fanlar bloglari'
+        unique_together = ('science_1', 'science_2')
+
+class ImportantSciencePairs(models.Model):
+    science_1 = models.ForeignKey(Science, on_delete=models.SET_NULL, null=True, blank=True, related_name='Fan_1')
+    science_2 = models.ForeignKey(Science, on_delete=models.SET_NULL, null=True, blank=True, related_name='Fan_2')
+    science_3 = models.ForeignKey(Science, on_delete=models.SET_NULL, null=True, blank=True, related_name='Fan_3')
+
+    def __str__(self):
+        return f'{self.science_1} | {self.science_2} | {self.science_3}'
+    def save(self, *args, **kwargs):
+        if not self.pk and ImportantSciencePairs.objects.exists():
+            raise ValidationError("Faqat bitta majburiy fanlar blogi qo'shish mumkin")
+        super(ImportantSciencePairs, self).save(*args, **kwargs)
+    class Meta:
+        verbose_name = 'Majburiy fanlar blogi'
+        verbose_name_plural = 'Majburiy fanlar blogi'
+        unique_together = ('science_1', 'science_2', 'science_3')
+
 
 class Study(models.Model):
     study_name = models.CharField(max_length=400)
     study_code = models.CharField(max_length=15)
-    science_1 = models.ForeignKey(Science, on_delete=models.SET_NULL, null=True, blank=True, related_name='science_1')
-    science_2 = models.ForeignKey(Science, on_delete=models.SET_NULL, null=True, blank=True, related_name='science_2')
+    sciencePair = models.ForeignKey(SciencePairs, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return self.study_name
@@ -55,6 +97,7 @@ class Study(models.Model):
     class Meta:
         verbose_name_plural = "Yo'nalishlar"
         verbose_name = "Yo'nalish"
+
 
 class StudyInUniversity(models.Model):
     university = models.ForeignKey(University, on_delete=models.CASCADE)
