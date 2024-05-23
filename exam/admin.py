@@ -1,6 +1,12 @@
-from django import forms
 from django.contrib import admin
-from .models import Science, Question, Option
+from django import forms
+from .models import Science, Question, Option, UserTest, UserTestQuestion, UserTestAnswer
+
+
+# @admin.register(Science)
+# class ScienceAdmin(admin.ModelAdmin):
+#     list_display = ('name',)
+#     search_fields = ('name',)
 
 class OptionFormSet(forms.BaseInlineFormSet):
     def clean(self):
@@ -29,13 +35,26 @@ class QuestionAdmin(admin.ModelAdmin):
     list_filter = ('science',)
     inlines = [OptionInline]
 
-@admin.register(Science)
-class ScienceAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    search_fields = ('name',)
-
 # @admin.register(Option)
 # class OptionAdmin(admin.ModelAdmin):
-#     list_display = ('option', 'question', 'is_correct')
-#     search_fields = ('option', 'question__text')
-#     list_filter = ('question', 'is_correct')
+#     list_display = ('question', 'option', 'is_correct')
+#     search_fields = ('question__text', 'option')
+
+@admin.register(UserTest)
+class UserTestAdmin(admin.ModelAdmin):
+    list_display = ('user', 'created_at')
+    search_fields = ('user__username', 'created_at')
+    list_filter = ('created_at',)
+
+@admin.register(UserTestQuestion)
+class UserTestQuestionAdmin(admin.ModelAdmin):
+    list_display = ('user_test', 'question', 'order')
+    search_fields = ('user_test__user__username', 'question__text')
+    list_filter = ('user_test',)
+
+@admin.register(UserTestAnswer)
+class UserTestAnswerAdmin(admin.ModelAdmin):
+    list_display = ('user_test_question', 'selected_option')
+    search_fields = ('user_test_question__question__text', 'selected_option__option')
+    list_filter = ('user_test_question',)
+
